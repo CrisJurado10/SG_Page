@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface NavLink {
   id: string;
@@ -6,15 +6,21 @@ interface NavLink {
   href: string;
 }
 
+// Extracted static configurations outside the component 
+// to prevent memory allocation overhead on every render cycle.
+const NAV_LINKS: NavLink[] = [
+  { id: 'home', label: 'Inicio', href: '#' },
+  { id: 'ecosistema', label: 'Ecosistema', href: '#ecosistema' },
+  { id: 'contacto', label: 'Contacto', href: '#contacto' },
+];
+
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
@@ -38,19 +44,7 @@ export const Navbar: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-  };
-
-  // Memoized navigation links to prevent unnecessary re-renders
-  const navLinks: NavLink[] = useMemo(
-    () => [
-      { id: 'home', label: 'Inicio', href: '#' },
-      { id: 'ecosistema', label: 'Ecosistema', href: '#ecosistema' },
-      { id: 'contacto', label: 'Contacto', href: '#contacto' }, 
-    ],
-    []
-  );
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   return (
     <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4 transition-all duration-300">
@@ -78,7 +72,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             <div className="hidden md:flex md:items-center md:space-x-8">
-              {navLinks.map((link) => (
+              {NAV_LINKS.map((link) => (
                 <a
                   key={link.id}
                   href={link.href}
@@ -109,7 +103,6 @@ export const Navbar: React.FC = () => {
                 onClick={toggleMobileMenu}
               >
                 <span className="sr-only">{isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}</span>
-                {/* Advanced single-SVG hamburger to cross morphing animation */}
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path 
                     strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -132,7 +125,6 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* High-performance CSS Grid expand/collapse animation for mobile menu */}
         <div
           className={`md:hidden grid transition-all duration-300 ease-in-out border-t ${
             isMobileMenuOpen ? 'grid-rows-[1fr] border-gray-200/50 opacity-100' : 'grid-rows-[0fr] border-transparent opacity-0'
@@ -141,7 +133,7 @@ export const Navbar: React.FC = () => {
         >
           <div className="overflow-hidden">
             <div className="px-4 pt-2 pb-6 space-y-2">
-              {navLinks.map((link) => (
+              {NAV_LINKS.map((link) => (
                 <a
                   key={link.id}
                   href={link.href}

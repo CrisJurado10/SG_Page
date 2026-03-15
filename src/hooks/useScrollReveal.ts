@@ -3,42 +3,40 @@ import { useEffect, useState, useRef } from 'react';
 /**
  * Custom hook that uses the native Intersection Observer API
  * to detect when an element enters the viewport.
- * * @param threshold - Percentage of the element's visibility required to trigger (0 to 1)
+ * 
+ * @template T - Type of the HTML element being observed
+ * @param threshold - Percentage of the element's visibility required to trigger (0 to 1)
+ * @returns Ref to attach to the element and boolean visibility state
  */
-export const useScrollReveal = (threshold: number = 0.1) => {
+export const useScrollReveal = <T extends HTMLElement = HTMLElement>(threshold: number = 0.1) => {
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+  // Using a generic type allows strict typing without ugly assertions in the consumer component
+  const ref = useRef<T>(null);
 
   useEffect(() => {
     const currentRef = ref.current;
     
+    // Performance optimization: Do not initialize observer if already visible
+    if (!currentRef || isVisible) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // If element scrolls into view, trigger the animation state
         if (entry.isIntersecting) {
           setIsVisible(true);
-          
-          // CRITICAL: Unobserve immediately after it becomes visible 
-          // to prevent memory leaks and unnecessary subsequent re-renders
-          if (currentRef) {
-            observer.unobserve(currentRef);
-          }
+          // Architectural Improvement: Use disconnect() to aggressively free up memory
+          // by entirely destroying the observer instance once its job is done.
+          observer.disconnect();
         }
       },
       { threshold }
     );
 
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
+    observer.observe(currentRef);
 
-    // Cleanup function on unmount
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.disconnect();
     };
-  }, [threshold]);
+  }, [threshold, isVisible]);
 
   return { ref, isVisible };
 };

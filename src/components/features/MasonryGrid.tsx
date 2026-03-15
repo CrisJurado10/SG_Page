@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { useScrollReveal } from '../../hooks/useScrollReveal'; // <-- Senior Hook Import
+import React, { useState, memo } from 'react';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
 
-// Interface defining the shape of our card data
 interface CardData {
   id: string;
   title: string;
@@ -10,8 +9,8 @@ interface CardData {
   imageUrl: string;
 }
 
-// Rock-solid Unsplash image URLs
-const mockCards: CardData[] = [
+// Extracted outside the component to prevent recreation on re-renders
+const MOCK_CARDS: CardData[] = [
   {
     id: '1',
     title: 'Tarjetas de Crédito Premium',
@@ -56,34 +55,30 @@ const mockCards: CardData[] = [
   }
 ];
 
-// Individual Card Component
-const MasonryCard: React.FC<{ card: CardData; index: number }> = ({ card, index }) => {
+// Memoized to prevent unnecessary re-renders of sibling cards when one state changes
+const MasonryCard: React.FC<{ card: CardData; index: number }> = memo(({ card, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  // Attach the scroll reveal hook to each card
-  const { ref, isVisible } = useScrollReveal(0.15);
+  
+  // Generic hook eliminates the need for 'as React.RefObject<HTMLUnknownElement>'
+  const { ref, isVisible } = useScrollReveal<HTMLElement>(0.15);
 
-  const toggleExpand = () => {
-    setIsExpanded((prev) => !prev);
-  };
+  const toggleExpand = () => setIsExpanded((prev) => !prev);
 
   return (
     <article 
-      ref={ref as React.RefObject<HTMLUnknownElement>} // Use type assertion to satisfy TS
-      // Apply visibility classes conditionally, utilizing the index to create a staggered delay effect
-      className={`break-inside-avoid mb-6 md:mb-8 bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] hover:-translate-y-1 transition-all duration-700 border border-slate-700/50 overflow-hidden group
-        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}
-      `}
-      style={{ transitionDelay: `${index * 100}ms` }} // Staggered entrance
+      ref={ref} 
+      className={`break-inside-avoid mb-6 md:mb-8 bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] hover:-translate-y-1 transition-all duration-700 border border-slate-700/50 overflow-hidden group ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'
+      }`}
+      style={{ transitionDelay: `${index * 100}ms` }}
     >
-      
-      {/* Image Wrapper */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-800">
         <div className="absolute inset-0 bg-blue-900/20 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
         <img
           src={card.imageUrl}
           alt={card.title}
           loading="lazy"
-          decoding="async" /* Offloads image decoding from the main thread to prevent jank and maintain 60fps scrolling */
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
       </div>
@@ -96,7 +91,6 @@ const MasonryCard: React.FC<{ card: CardData; index: number }> = ({ card, index 
           {card.shortText}
         </p>
 
-        {/* CRITICAL PERFORMANCE: CSS Grid 0fr to 1fr animation technique */}
         <div
           className={`grid transition-[grid-template-rows] duration-500 ease-in-out ${
             isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
@@ -110,7 +104,6 @@ const MasonryCard: React.FC<{ card: CardData; index: number }> = ({ card, index 
           </div>
         </div>
 
-        {/* Accessible Toggle Button */}
         <button
           type="button"
           onClick={toggleExpand}
@@ -131,18 +124,17 @@ const MasonryCard: React.FC<{ card: CardData; index: number }> = ({ card, index 
       </div>
     </article>
   );
-};
+});
+MasonryCard.displayName = 'MasonryCard';
 
 export const MasonryGrid: React.FC = () => {
-  const { ref: headerRef, isVisible: isHeaderVisible } = useScrollReveal();
+  const { ref: headerRef, isVisible: isHeaderVisible } = useScrollReveal<HTMLDivElement>();
 
   return (
     <section className="w-full py-24 px-4 sm:px-6 lg:px-8 bg-slate-950 relative z-30" id="ecosistema">
       <div className="max-w-7xl mx-auto">
-
-        {/* Section Header with Fade-in Effect */}
         <div 
-          ref={headerRef as React.RefObject<HTMLDivElement>}
+          ref={headerRef}
           className={`text-center mb-16 md:mb-20 transition-all duration-1000 ease-out ${
             isHeaderVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
           }`}
@@ -155,9 +147,8 @@ export const MasonryGrid: React.FC = () => {
           </p>
         </div>
 
-        {/* Pure CSS Columns Masonry Layout */}
         <div className="columns-1 md:columns-2 xl:columns-3 gap-6 md:gap-8">
-          {mockCards.map((card, index) => (
+          {MOCK_CARDS.map((card, index) => (
             <MasonryCard key={card.id} card={card} index={index} />
           ))}
         </div>
