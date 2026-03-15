@@ -42,11 +42,12 @@ export const Navbar: React.FC = () => {
     setIsMobileMenuOpen((prev) => !prev);
   };
 
+  // Memoized navigation links to prevent unnecessary re-renders
   const navLinks: NavLink[] = useMemo(
     () => [
-      { id: 'home', label: 'Inicio', href: '/' },
-      { id: 'cards', label: 'Tarjetas', href: '#tarjetas' },
-      { id: 'services', label: 'Servicios', href: '#servicios' },
+      { id: 'home', label: 'Inicio', href: '#' },
+      { id: 'ecosistema', label: 'Ecosistema', href: '#ecosistema' },
+      { id: 'contacto', label: 'Contacto', href: '#contacto' }, 
     ],
     []
   );

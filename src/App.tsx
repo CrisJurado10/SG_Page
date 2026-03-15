@@ -1,5 +1,6 @@
 import { Navbar } from './components/layout/Navbar';
 import { HeroParallax } from './components/features/HeroParallax';
+import { MasonryGrid } from './components/features/MasonryGrid';
 
 function App() {
   return (
@@ -7,9 +8,7 @@ function App() {
       <Navbar />
       <main>
         <HeroParallax />
-        <div className="h-[150vh] bg-white flex items-start justify-center pt-20">
-          <h2 className="text-3xl font-bold text-gray-800">Espacio para el Masonry Grid</h2>
-        </div>
+        <MasonryGrid />
       </main>
     </div>
   )
