@@ -148,10 +148,16 @@ export const Footer: React.FC = () => {
           </p>
 
           <div className="flex gap-6 text-sm text-slate-500">
-            <a href="#" className="transition-colors hover:text-blue-400 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+            <a
+              href="#"
+              className="transition-colors hover:text-blue-400 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
               Términos de servicio
             </a>
-            <a href="#" className="transition-colors hover:text-blue-400 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+            <a
+              href="#"
+              className="transition-colors hover:text-blue-400 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
               Política de privacidad
             </a>
           </div>
