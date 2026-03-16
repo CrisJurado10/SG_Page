@@ -14,7 +14,10 @@ export const HeroParallax: React.FC = () => {
   // Mount state for sophisticated entrance animations
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
-    setIsMounted(true);
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
