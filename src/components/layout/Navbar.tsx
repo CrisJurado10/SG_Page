@@ -1,155 +1,96 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-interface NavLink {
-  id: string;
-  label: string;
-  href: string;
-}
-
-// Extracted static configurations outside the component 
-// to prevent memory allocation overhead on every render cycle.
-const NAV_LINKS: NavLink[] = [
-  { id: 'home', label: 'Inicio', href: '#' },
-  { id: 'ecosistema', label: 'Ecosistema', href: '#ecosistema' },
-  { id: 'contacto', label: 'Contacto', href: '#contacto' },
-];
+import React, { useState, useRef, useCallback, useMemo } from "react";
+import { useScrollBehavior } from "../../hooks/useScrollBehavior";
+import { useScrollSpy } from "../../hooks/useScrollSpy";
+import { useClickOutside } from "../../hooks/useClickOutside";
+import { NAV_LINKS } from "./Navbar/constants";
+import { Logo } from "./Navbar/Logo";
+import { DesktopNav } from "./Navbar/DesktopNav";
+import { ToggleButton } from "./Navbar/ToggleButton";
+import { MobileNav } from "./Navbar/MobileNav";
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+
+  const { scrolled, visible } = useScrollBehavior();
+  
+  const linkIds = useMemo(() => NAV_LINKS.map(link => link.id), []);
+  const activeSection = useScrollSpy(linkIds);
+
   const navRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setIsMobileMenuOpen(false);
-      }
-    };
+  // ✅ Ahora el hook acepta el navRef (HTMLElement | null) sin quejarse
+  useClickOutside(navRef, closeMobileMenu, isMobileMenuOpen);
 
-    if (isMobileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const handleLinkClick = useCallback((href: string) => {
+    setIsMobileMenuOpen(false);
+
+    const id = href.replace("#", "");
+
+    if (id === "home") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isMobileMenuOpen]);
+    const element = document.getElementById(id);
+    if (!element) return;
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+    const offset = 100;
+    const top = element.getBoundingClientRect().top + window.scrollY - offset;
+
+    window.scrollTo({
+      top,
+      behavior: "smooth"
+    });
+  }, []);
 
   return (
-    <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4 transition-all duration-300">
-      <nav 
+    <div
+      className={`fixed inset-x-0 top-0 z-50 px-4 pt-4 transition-transform duration-500 transform-gpu ${
+        visible ? "translate-y-0" : "-translate-y-full"
+      }`}
+      style={{ willChange: "transform" }}
+    >
+      <nav
         ref={navRef}
+        role="navigation"
         aria-label="Main Navigation"
-        className={`max-w-6xl mx-auto rounded-2xl transition-all duration-500 border ${
-          scrolled 
-            ? 'bg-white/80 backdrop-blur-md border-gray-200 shadow-lg shadow-black/5' 
-            : 'bg-white/10 backdrop-blur-md border-white/20 shadow-xl'
+        className={`max-w-6xl mx-auto rounded-2xl border transition-all duration-500 ${
+          scrolled
+            ? "bg-white/80 backdrop-blur-md border-gray-200 shadow-lg shadow-black/5"
+            : "bg-white/10 backdrop-blur-md border-white/20 shadow-xl"
         }`}
       >
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-            <div className="flex-shrink-0 flex items-center">
-              <a 
-                href="/" 
-                className={`text-2xl font-black tracking-tighter transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md ${
-                  scrolled ? 'text-blue-600' : 'text-white'
-                }`}
-              >
-                SG <span className={scrolled ? 'text-gray-900' : 'text-blue-400'}>SynerGy</span>
-              </a>
-            </div>
-
-            <div className="hidden md:flex md:items-center md:space-x-8">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.href}
-                  className={`group relative px-1 py-2 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md ${
-                    scrolled ? 'text-gray-600 hover:text-blue-600' : 'text-gray-200 hover:text-white'
-                  }`}
-                  aria-current={link.id === 'home' ? 'page' : undefined}
-                >
-                  {link.label}
-                  <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 ease-out group-hover:w-full ${
-                    scrolled ? 'bg-blue-600' : 'bg-blue-400'
-                  }`}></span>
-                </a>
-              ))}
-            </div>
-
-            <div className="flex items-center md:hidden">
-              <button
-                type="button"
-                className={`inline-flex items-center justify-center p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-inset transition-colors ${
-                  scrolled 
-                    ? 'text-gray-600 hover:bg-gray-100 focus:ring-blue-600' 
-                    : 'text-white hover:bg-white/20 focus:ring-white'
-                }`}
-                aria-controls="mobile-menu"
-                aria-expanded={isMobileMenuOpen}
-                aria-label={isMobileMenuOpen ? 'Cerrar menú principal' : 'Abrir menú principal'}
-                onClick={toggleMobileMenu}
-              >
-                <span className="sr-only">{isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}</span>
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path 
-                    strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    className={`transition-all duration-300 origin-center ${isMobileMenuOpen ? 'translate-y-1.5 rotate-45' : ''}`}
-                    d="M4 6h16" 
-                  />
-                  <path 
-                    strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    className={`transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`}
-                    d="M4 12h16" 
-                  />
-                  <path 
-                    strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    className={`transition-all duration-300 origin-center ${isMobileMenuOpen ? '-translate-y-1.5 -rotate-45' : ''}`}
-                    d="M4 18h16" 
-                  />
-                </svg>
-              </button>
-            </div>
+          <div className="flex h-16 items-center justify-between">
+            <Logo scrolled={scrolled} onLinkClick={handleLinkClick} />
+            <DesktopNav
+              scrolled={scrolled}
+              activeSection={activeSection}
+              navLinks={NAV_LINKS}
+              onLinkClick={handleLinkClick}
+            />
+            <ToggleButton
+              scrolled={scrolled}
+              isOpen={isMobileMenuOpen}
+              onToggle={toggleMobileMenu}
+            />
           </div>
         </div>
 
-        <div
-          className={`md:hidden grid transition-all duration-300 ease-in-out border-t ${
-            isMobileMenuOpen ? 'grid-rows-[1fr] border-gray-200/50 opacity-100' : 'grid-rows-[0fr] border-transparent opacity-0'
-          } ${scrolled ? 'bg-white/95' : 'bg-slate-900/95 backdrop-blur-xl'}`}
-          id="mobile-menu"
-        >
-          <div className="overflow-hidden">
-            <div className="px-4 pt-2 pb-6 space-y-2">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-4 py-3 rounded-xl text-base font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                    scrolled 
-                      ? 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' 
-                      : 'text-gray-200 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+        <MobileNav
+          isOpen={isMobileMenuOpen}
+          activeSection={activeSection}
+          navLinks={NAV_LINKS}
+          onLinkClick={handleLinkClick}
+        />
       </nav>
     </div>
   );
